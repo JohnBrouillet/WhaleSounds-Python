@@ -76,10 +76,10 @@ Genre 1 et Genre 2 deviendront des boutons de filtrage des espèces référencé
 
 *Données non intégrées à l'exécutable*
 ```
-python -m PyInstaller --onefile --windowed  --add-data "icons;icons" --hidden-import whalemainwindow --hidden-import simple_viewer --hidden-import home_page --hidden-import whale_utils --hidden-import audio_player_widget main.py
+python -m PyInstaller --onefile --windowed  --add-data "icons;icons" --hidden-import whalemainwindow --hidden-import simple_viewer --hidden-import home_page --hidden-import whale_utils --hidden-import audio_player_widget main.py --name whalesounds
 ```
 
 *Données intégrées à l'exécutable*
 ```
-python -m PyInstaller --onefile --windowed  --add-data "icons;icons" --add-data "data;data" --hidden-import whalemainwindow --hidden-import simple_viewer --hidden-import home_page --hidden-import whale_utils --hidden-import audio_player_widget main.py
+python -m PyInstaller --onefile --windowed  --add-data "icons;icons" --add-data "data;data" --hidden-import whalemainwindow --hidden-import simple_viewer --hidden-import home_page --hidden-import whale_utils --hidden-import audio_player_widget main.py --name whalesounds
 ```
