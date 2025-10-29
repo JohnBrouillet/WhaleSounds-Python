@@ -1,5 +1,8 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget
+import os
+import logging
+import traceback
+from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QMessageBox
 
 from home_page import HomePage
 
@@ -40,12 +43,26 @@ class MainApp(QMainWindow):
         self.showMaximized()
 
 if __name__ == "__main__":
+    # configure a file logger next to the executable so crashes can be diagnosed
+    base = getattr(sys, 'frozen', False) and os.path.dirname(sys.executable) or os.path.abspath('.')
     app = QApplication(sys.argv)
     try:
-        from qt_material import apply_stylesheet
-        #apply_stylesheet(app, theme='light_blue.xml')
-    except ImportError:
-        pass
-    win = MainApp()
-    win.show()
-    sys.exit(app.exec())
+        try:
+            from qt_material import apply_stylesheet
+            #apply_stylesheet(app, theme='light_blue.xml')
+        except ImportError:
+            pass
+        win = MainApp()
+        win.show()
+        code = app.exec()
+    except Exception as e:
+        # Log full traceback to file
+        tb = traceback.format_exc()
+        logging.error("Unhandled exception during startup:\n%s", tb)
+        # Show a friendly message box to the user
+        try:
+            QMessageBox.critical(None, "Erreur au démarrage", "Une erreur est survenue au démarrage. Voir whalesounds_error.log à côté de l'exécutable pour les détails.")
+        except Exception:
+            pass
+        code = 1
+    sys.exit(code)

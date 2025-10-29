@@ -12,7 +12,7 @@ def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return abs_path
-import os
+
 import numpy as np
 import pyqtgraph as pg
 import yaml
@@ -261,8 +261,34 @@ class WhaleMainWindow(QMainWindow):
         self.waveform_curve = None
 
         abs_yaml_path = resource_path(yaml_path)
-        with open(abs_yaml_path, "r", encoding="utf-8") as f:
-            self.yaml_data = yaml.safe_load(f)
+        # Vérifie l'existence du fichier YAML de données
+        if not os.path.exists(abs_yaml_path):
+            base = getattr(sys, 'frozen', False) and os.path.dirname(sys.executable) or os.path.abspath('.')
+            log_path = os.path.join(base, 'whalesounds_error.log')
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"Missing data file: {abs_yaml_path}\n")
+            try:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.critical(None, 'Fichier manquant', f"Le fichier de données est introuvable:\n{abs_yaml_path}\n\nAssurez-vous que le dossier 'data' se trouve à côté de l'exécutable.")
+            except Exception:
+                pass
+            raise FileNotFoundError(f"Data file not found: {abs_yaml_path}")
+        try:
+            with open(abs_yaml_path, "r", encoding="utf-8") as f:
+                self.yaml_data = yaml.safe_load(f)
+        except Exception as e:
+            base = getattr(sys, 'frozen', False) and os.path.dirname(sys.executable) or os.path.abspath('.')
+            log_path = os.path.join(base, 'whalesounds_error.log')
+            import traceback
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write('Error loading YAML file:\n')
+                f.write(traceback.format_exc())
+            try:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.critical(None, 'Erreur YAML', f"Impossible de charger {abs_yaml_path}. Voir {log_path} pour les détails.")
+            except Exception:
+                pass
+            raise
 
         self.etages = list(self.yaml_data.keys())
         # Ajoute les boutons d'étage sur 2 colonnes dynamiques
@@ -286,7 +312,6 @@ class WhaleMainWindow(QMainWindow):
 
         self.showMaximized()
 
-        
     def set_colormap(self, cmap_name):
         cmap = pg.colormap.get(cmap_name)
         lut = cmap.getLookupTable()
@@ -404,7 +429,7 @@ class WhaleMainWindow(QMainWindow):
         self.update_nav_buttons()
 
     def load_current_file(self):
-        path = os.path.join("data", self.current_files[self.current_index].lstrip("/"))
+        path = resource_path(os.path.join("data", self.current_files[self.current_index].lstrip("/")))
         self.samples, self.rate, self.duration, self.time = load_audio(path)
         if self.waveform_curve:
             self.waveform_curve.setData(self.time, self.samples)
